@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sos_defence_project/screens/visitor_home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -21,63 +22,130 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: PageView(
-        controller: _pageController,
-        //locks physics attribute if we are on the legal slide (i.e slide 4), if not, bounce normally
-        physics: _currentIndex == 3
-          ? const NeverScrollableScrollPhysics() : const BouncingScrollPhysics(),
-        onPageChanged: (index){
-          setState(() {
-            _currentIndex = index; // to update the state when user swipes
-          });
-        },
-        children: [
-          // Slide 1: categories info
-          const IncidentCategoriesSlide(),
+      // Deep Midnight Blue (#0F172A), my app base color theme 1
+      backgroundColor: const Color(0xFF0F172A),
 
-          // Slide 2: Map and Nearby alerts
-          const OnboardingPage(
-            icon: Icons.map_rounded,
-            title: "LIVE MAP & ALERTS",
-            description: "Once authenticated, view real-time incident heatmaps and receive critical safety alerts for your surrounding sector.",
-            slideNumber: '02 / 04',
-          ),
+      body: SafeArea(
+        child: Column(
+          children: [
 
-          // Slide 3: SOS Report Trigger
-          const OnboardingPage(
-            icon: Icons.sos_rounded,
-            title: "INSTANT SOS REPORTING",
-            description: "Slide to activate the SOS trigger to initiate a 3-second safety countdown and an AI ambient audio scan for rapid threat evaluation.",
-            slideNumber: '03 / 04',
-          ),
+            Expanded( // Top Bar the 4 slides
+              child: PageView(
+                controller: _pageController,
+                //locks physics attribute if we are on the legal slide (i.e slide 4), if not, bounce normally
+                physics:  const BouncingScrollPhysics(),
+                onPageChanged: (index){
+                  setState(() {
+                    _currentIndex = index; // to update the state when user swipes
+                  });
+                },
 
-          // Slide 4: Legal Warning & consent
-          const OnboardingPage(
-            icon: Icons.gavel_rounded,
-            title: "LEGAL WARNING",
-            description: "WARNING : False incident reporting is a severe offense under Cameroonian Law. Misusing emergency services carries strict legal penalities!",
-            slideNumber: '04 / 04',
-          ),
-        ],
+                children: const [
+                  // Slide 1: categories info
+                   OnboardingPage(
+                     icon: Icons.category_rounded,
+                     title: "Categorized Incident Reports",
+                     description: "Direct your reports instantly to the appropriate public safety services based on the situation encountered !",
+                   ),
+
+                  // Slide 2: Map and Nearby alerts
+                   OnboardingPage(
+                    icon: Icons.map_rounded,
+                    title: "LIVE MAP & ALERTS",
+                    description: "Once authenticated, view real-time incident heatmaps and receive critical safety alerts for your surrounding sector.",
+
+                  ),
+
+                  // Slide 3: SOS Report Trigger
+                   OnboardingPage(
+                    icon: Icons.sos_rounded,
+                    title: "INSTANT SOS REPORTING",
+                    description: "Slide to activate the SOS trigger to initiate a 3-second safety countdown and an AI ambient audio scan for rapid threat evaluation.",
+
+                  ),
+
+                  // Slide 4: Legal Warning & consent
+                  LegalWarningSlide(),
+                ],
+              ),
+            ),
+
+            //standard dot indicators sliding
+            Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(4, (index){
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                      width: _currentIndex == index ? 24.0 : 8.0,
+                      height: 8.0,
+                      decoration:  BoxDecoration(
+                        color: _currentIndex == index ? const Color(0xFF38BDF8) : const Color(0xFF334155),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                    );
+                  }),
+                ),
+            ),
+
+            //Bottom action Area: to display the "I accept" button only on slide 4 and "Continue" for the rest of slides
+            Padding(
+                  padding: const EdgeInsets.all(24.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _currentIndex == 3 ? Colors.red : const Color(0xFF38BDF8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16),),
+                      ),
+                      onPressed: (){
+                        if (_currentIndex == 3) {
+                          // To do navigation to the visitor homepage
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (
+                                context) => const VisitorHomeScreen()),
+                          );
+                        } else{
+                          // advance to next slide if not yet on legal page
+                          _pageController.nextPage(
+                             duration: const Duration(milliseconds: 300),
+                             curve: Curves.easeInOut,
+                          );
+                        }
+                      },
+                      child: Text(
+                        _currentIndex == 3 ? "I ACCEPT" : "Continue",
+                         style: TextStyle(
+                           color: Colors.white,
+                           fontSize: 16, letterSpacing: 1.2,
+                           fontWeight: FontWeight.bold,
+                         ),
+                      ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
 
 
-//Onboarding class layout skeleton for all the Slides except slide 1:
+//Onboarding class layout skeleton for all the Slides :
 class OnboardingPage extends StatelessWidget {
  final IconData icon;
  final String title;
  final String description;
- final String slideNumber;
 
  const OnboardingPage({
    super.key,
    required this.icon,
    required this.title,
    required this.description,
-   required this.slideNumber,
  });
 
   @override
@@ -86,42 +154,48 @@ class OnboardingPage extends StatelessWidget {
       padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Slide Counter
-            Text(
-              slideNumber,
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 2.0,
-                ),
-
+            Container(
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                    blurRadius: 20,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: Icon(
+                icon,
+                size: 64,
+                color: const Color(0xFF38BDF8),
+              ),
             ),
 
-            const SizedBox(height: 24),
-            Icon(icon, size: 94, color: Colors.white,),
-            const SizedBox(height: 32),
-            // Header
+            const SizedBox(height: 48),
+           //Heder text design
             Text(
               title,
+              textAlign: TextAlign.center,
               style: const TextStyle(
-                color: Colors.white,
-                fontSize: 28,
+                color: Colors.white, fontSize: 24, letterSpacing: 1.1,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
               ),
             ),
 
             const SizedBox(height: 16),
-            //Description Text
+            // Description Text Design
             Text(
               description,
+              textAlign: TextAlign.center,
               style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 16,
-                height: 1.5
+                color: Color(0xFF94A3B8),
+                fontSize: 15,
+                height: 1.6,
               ),
             ),
           ],
@@ -130,9 +204,9 @@ class OnboardingPage extends StatelessWidget {
   }
 }
 
-// Special class layout skeleton for slide 1 contents
-class IncidentCategoriesSlide extends StatelessWidget {
-  const IncidentCategoriesSlide({super.key});
+// Legal WARNING slide additional style
+class LegalWarningSlide extends StatelessWidget {
+  const LegalWarningSlide({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -140,96 +214,46 @@ class IncidentCategoriesSlide extends StatelessWidget {
         padding: const EdgeInsets.all(32.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("01 / 02",
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2.0,
+            //Gavel icon with subtle red/ember warning aura
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E293B),
+                shape: BoxShape.circle,
+                border: Border.all(color: const Color(0xFFFF3B30).withValues(alpha: 0.6), width: 2,
+                ),
+              ),
+              child: const Icon(
+                Icons.gavel_rounded,
+                size: 65,
+                color: Color(0xFFFF3B30),
               ),
             ),
-            const SizedBox(height: 32),
 
-            // horizontal alignment of icons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                //medical icon
-                Opacity(
-                  opacity: 0.4,
-                  child: Transform.scale(
-                    scale: 0.95,
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xE7123357),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(Icons.local_hospital_sharp, size: 40, color: Colors.white,),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                //Police Icon (Center Icon)
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.redAccent,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.redAccent.withValues(alpha: 0.4),
-                        blurRadius: 16,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.local_police, size: 56, color: Colors.white),
-                ),
-                const SizedBox(width: 12),
-
-                //Firefighter Icon
-                Opacity(
-                  opacity: 0.4,
-                  child: Transform.scale(
-                    scale: 0.95,
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xE7123357),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: const Icon(Icons.local_fire_department, size: 40, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 48),
-            const Text("CATEGORIZED INCIDENT REPORTS",
+            const SizedBox(height: 36),
+            const Text(
+              "Legal Warning & Compliance",
+              textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
-                fontSize: 26,
-                letterSpacing: 1.2,
               ),
-              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            const Text("Direct your Emergency reports instantly to the appropriate public safety services based on the situation encountered !",
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 16,
-              height: 1.5,
-            ),
+            const Text(
+              "WARNING: False reporting or malicious pranks directed at emergency services carry severe legal penalties under Cameroonian law. Ensure all generated Incident Report represent valid threats.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF94A3B8),
+                fontSize: 14, height: 1.5,
+              ),
             ),
           ],
         ),
     );
   }
 }
+
+
