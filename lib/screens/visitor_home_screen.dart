@@ -1,7 +1,10 @@
-//for the Imagefilter.blur widget usage, this library is important
+//for the Image filter.blur widget usage, this library is important
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:sos_defence_project/screens/alerts_screen.dart';
+import 'package:sos_defence_project/screens/login_screen.dart';
+import 'package:sos_defence_project/screens/signup_screen.dart';
 
 class VisitorHomeScreen extends StatefulWidget {
   const VisitorHomeScreen({super.key});
@@ -15,7 +18,15 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
   //A "remote control" key so the right-side button can open the left-side drawer
   final GlobalKey<ScaffoldState> _scafoldKey = GlobalKey<ScaffoldState>();
   //Controls the Carousel sizing of the Categories Cards (0.35=>35% of screen width)
-
+  final PageController _categoryController = PageController(viewportFraction: 0.35, initialPage: 1);
+  int _focusedIndex = 1; // tracks which card is in the center
+  //for the dynamic appearance of the red badge on the alert icon
+  bool _hasUnreadAlerts = true;
+  // Role based Access Control for visitor vs citizen
+  bool _isAuthenticated = false;
+  //to implement user's profile dynamically
+  String _currentUserName = "";
+  String _currentUserPhone = "";
 
   @override
   Widget build(BuildContext context) {
@@ -55,15 +66,35 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
           child: Column(
             children: [
               //Top : user info
-              const UserAccountsDrawerHeader(
+               UserAccountsDrawerHeader(
                   decoration: BoxDecoration( color: Color(0xFF0F172A)),
-                  accountName: Text("Visitor Mode", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),),
-                  accountEmail: Text("Unauthenticated Guest Session", style: TextStyle(color: Color(0xFF94A3B8)),),
+                  //Dynamic Account Name:
+                  accountName: Text(
+                    _isAuthenticated ? _currentUserName : "Visitor Mode",
+                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  accountEmail: Text(
+                    _isAuthenticated ? _currentUserPhone : "Unauthenticated Guest Session",
+                    style: TextStyle(color: Color(0xFF94A3B8)),),
                   currentAccountPicture: CircleAvatar(
                     backgroundColor: Color(0xFF38BDF8),
                     child: Icon(Icons.person, color: Colors.white, size: 50,),
                   ),
               ),
+              
+              // LogOut Button visible if authenticated
+              if (_isAuthenticated)
+                ListTile(
+                  leading: const Icon(Icons.logout_rounded, color: Color(0xFFFF3B30)),
+                  title: const Text('Log Out', style: TextStyle(color: Color(0xFFFF3B30), fontWeight: FontWeight.bold)),
+                  onTap: (){
+                    //update state to lock the map
+                    setState(() {
+                      _isAuthenticated = false;
+                    });
+                    Navigator.pop(context);// closes the drawer automatically
+                  },
+                ),
               const Spacer(),
 
               //Bottom: legal warning
@@ -71,7 +102,7 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
                   padding: EdgeInsets.all(24.0),
                 child: Text("WARNING: False reporting carries strict legal penalties under Cameroonian law.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 9, height: 1.5,
+                  style: TextStyle(color: Color(0xFF38BDF8), fontWeight: FontWeight.bold, fontSize: 11, height: 1.5,
                   ),
                 ),
               ),
@@ -97,6 +128,7 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
           ),
 
           // LAYER B : The Blur Overlay to prevent visitor from seeing the Map
+          if (!_isAuthenticated)
           Positioned.fill(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
@@ -115,23 +147,69 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
                         const SizedBox(height: 8),
 
                         const Text(
-                          "Register to view live heatmap.",
+                          "Authenticate to view live heatmap and to Report Incidents.",
                           style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
                         ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 32),
 
-                        //The Button to Authenticate via OTP
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF38BDF8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                          ),
-                          onPressed: (){
-                            //directs to Twilio OTP Phone Authentication Screen
-                            debugPrint("Routing to Authentication...");
-                          }, 
-                          child: const Text("Create Account", style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
+                        //The Button to Authenticate or Create Account via OTP
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+
+                          children: [
+                            //Log In Button
+                            OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFF38BDF8), width: 2),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                ),
+                                onPressed: () async {
+                                  //wait for the log in screen to return its "sticky note" (true or false)
+                                  final dynamic result = await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                  );
+
+                                  // if login successful, updating home page state
+                                  if (result != null && result is Map) {
+                                    setState(() {
+                                      _isAuthenticated = true;
+                                      _currentUserName = "verified Citizen"; // name not needed for log in into its account
+                                      _currentUserPhone = result['phone'];
+                                    });
+                                  }
+                                },
+                                child:const Text("Log In", style: TextStyle(color: Color(0xFF38BDF8), fontWeight: FontWeight.bold)),
+                            ),
+                            const SizedBox(height: 12),
+
+                            //Create Account Button
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF38BDF8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              ),
+                              onPressed: () async {
+                                //dynamic which expect to recieve a data package (a map)
+                                final dynamic result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const SignupScreen()),
+                                );
+
+                                //unlocks the map and apply real data if registration was successful
+                                if (result != null && result is Map) {
+                                  setState(() {
+                                    _isAuthenticated = true;
+                                    _currentUserName = result["name"];
+                                    _currentUserPhone = result["phone"];
+                                  });
+                                }
+                              },
+                              child: const Text("Create Account", style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -141,8 +219,9 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
           ),
 
           // LAYER C : Horizontal Caterogies report Bar
+          if (_isAuthenticated)
           Positioned(
-              bottom: 16,
+              bottom: 24,
               left: 0,
               right: 0,
               child: Column(
@@ -156,21 +235,83 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
                       style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    height: 150,
+                    child: PageView.builder(
+                      controller: _categoryController,
+                      physics: const BouncingScrollPhysics(),
+                      onPageChanged: (index) {
+                        setState(() {
+                          _focusedIndex = index; //update state as the user swipes
+                        });
+                      },
+                      itemCount: 5,
+                      itemBuilder: (context, index) {
+                        //define the data for our catego cards
+                        final List<Map<String, dynamic>> categories = [
+                          {"icon": Icons.local_police, 'label': 'Police', 'color': const Color(0xFF3B82F6)},
+                          {"icon": Icons.local_fire_department, 'label': 'FireFighter', 'color': const Color(0xFFF97316)},
+                          {"icon": Icons.local_hospital, 'label': 'Medical', 'color': const Color(0xFF10B981)},
+                          {"icon": Icons.security, 'label': 'Military', 'color': const Color(0xFF64748B)},
+                          {"icon": Icons.bug_report, 'label': 'MyDemo', 'color': const Color(0xFF8B5CF6)},
+                        ];
 
-                  //Horizontal scrolling of category cards
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      children: [
-                        _buildQuickActionBtn(Icons.local_police, 'Police', const Color(0xFF3B82F6)),
-                        _buildQuickActionBtn(Icons.local_fire_department, 'FireFighter', const Color(0xFFF97316)),
-                        _buildQuickActionBtn(Icons.local_hospital, 'Medical', const Color(0xFF10B981)),
-                        _buildQuickActionBtn(Icons.security, 'Military', const Color(0xFF64748B)),
-                        _buildQuickActionBtn(Icons.bug_report, 'Demo', const Color(0xFF8B5CF6)), // for Demo
-                      ],
+                        //logic for the fade/scale effect
+                        bool isFocused = _focusedIndex == index;
+
+                        return GestureDetector(
+                          onTap: () {
+                            if (!isFocused) {
+                              _categoryController.animateToPage(
+                                  index,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut
+                              );
+                            } else {
+                              debugPrint("${categories[index]["label"]} Report Incident Triggered !");
+                            }
+                          },
+                          child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                            margin: EdgeInsets.symmetric(
+                              horizontal: isFocused ? 4.0 : 12.0,
+                              vertical: isFocused ? 0 : 16.0,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E293B).withValues(alpha: 0.6),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                //only the focused card gets a colored glowing border to pop forward
+                                color: isFocused ? categories[index]["color"].withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.05),
+                                width:  isFocused ? 2 : 1,
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+
+                              children: [
+                                Icon(
+                                  categories[index]["icon"],
+                                  color: categories[index]["color"],
+                                  size: isFocused ? 40 : 20,
+                                ),
+                                const SizedBox(height: 12),
+
+                                Text(
+                                  categories[index]["label"],
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: isFocused ? FontWeight.bold : FontWeight.normal,
+                                    fontSize: isFocused ? 14 : 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ],
@@ -226,13 +367,25 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
             const SizedBox(width: 48), //empty middle space for SOS button to stand easily
 
             IconButton(
-              icon: const Badge(
-                backgroundColor: Color(0xFFFF3B30),
-                smallSize: 8,
-                child: Icon(Icons.notifications_rounded, size: 28),
-              ),
+              icon: _hasUnreadAlerts
+                  ? const Badge(
+                      backgroundColor: Color(0xFFFF3B30),
+                      smallSize: 8,
+                      child: Icon(Icons.notifications_rounded, size: 28),
+                    )
+                  : const Icon(Icons.notifications_rounded, size: 28),
               color: const Color(0xFF94A3B8),
-              onPressed: () => debugPrint("Routing to Alerts..."),
+              onPressed: () {
+                setState(() {
+                  _hasUnreadAlerts = false; // clears notif when already read
+                });
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => AlertsScreen(isAuthenticated: _isAuthenticated),
+                    ),
+                );
+              },
             ),
           ],
         ),
