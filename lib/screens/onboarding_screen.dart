@@ -10,7 +10,7 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
- //Controller to manage the  4 slides
+  //Controller to manage the  4 slides
   final PageController _pageController = PageController();
   int _currentIndex = 0;
 
@@ -43,14 +43,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
                 children: const [
                   // Slide 1: categories info
-                   OnboardingPage(
-                     icon: Icons.category_rounded,
-                     title: "Categorized Incident Reports",
-                     description: "Direct your reports instantly to the appropriate public safety services based on the situation encountered !",
-                   ),
+                  OnboardingPage(
+                    icon: Icons.category_rounded,
+                    title: "Categorized Incident Reports",
+                    description: "Direct your reports instantly to the appropriate public safety services based on the situation encountered !",
+                  ),
 
                   // Slide 2: Map and Nearby alerts
-                   OnboardingPage(
+                  OnboardingPage(
                     icon: Icons.map_rounded,
                     title: "LIVE MAP & ALERTS",
                     description: "Once authenticated, view real-time incident heatmaps and receive critical safety alerts for your surrounding sector.",
@@ -58,7 +58,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
 
                   // Slide 3: SOS Report Trigger
-                   OnboardingPage(
+                  OnboardingPage(
                     icon: Icons.sos_rounded,
                     title: "INSTANT SOS REPORTING",
                     description: "Slide to activate the SOS trigger to initiate a 3-second safety countdown and an AI ambient audio scan for rapid threat evaluation.",
@@ -73,61 +73,61 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
             //standard dot indicators sliding
             Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(4, (index){
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                      width: _currentIndex == index ? 24.0 : 8.0,
-                      height: 8.0,
-                      decoration:  BoxDecoration(
-                        color: _currentIndex == index ? const Color(0xFF38BDF8) : const Color(0xFF334155),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                    );
-                  }),
-                ),
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(4, (index){
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                    width: _currentIndex == index ? 24.0 : 8.0,
+                    height: 8.0,
+                    decoration:  BoxDecoration(
+                      color: _currentIndex == index ? AppColors.primaryBlue : AppColors.textMuted, // Swapped to tokens
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
+                  );
+                }),
+              ),
             ),
 
             //Bottom action Area: to display the "I accept" button only on slide 4 and "Continue" for the rest of slides
             Padding(
-                  padding: const EdgeInsets.all(24.0),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _currentIndex == 3 ? Colors.red : const Color(0xFF38BDF8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16),),
-                      ),
-                      onPressed: (){
-                        if (_currentIndex == 3) {
-                          // To do navigation to the visitor homepage
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (
-                                context) => const VisitorHomeScreen()),
-                          );
-                        } else{
-                          // advance to next slide if not yet on legal page
-                          _pageController.nextPage(
-                             duration: const Duration(milliseconds: 300),
-                             curve: Curves.easeInOut,
-                          );
-                        }
-                      },
-                      child: Text(
-                        _currentIndex == 3 ? "I ACCEPT" : "Continue",
-                         style: TextStyle(
-                           color: Colors.white,
-                           fontSize: 16, letterSpacing: 1.2,
-                           fontWeight: FontWeight.bold,
-                         ),
-                      ),
+              padding: const EdgeInsets.all(24.0),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _currentIndex == 3 ? AppColors.tacticalRed : AppColors.primaryBlue, // Swapped to tokens
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16),),
+                  ),
+                  onPressed: (){
+                    if (_currentIndex == 3) {
+                      // To do navigation to the visitor homepage
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (
+                            context) => const VisitorHomeScreen()),
+                      );
+                    } else{
+                      // advance to next slide if not yet on legal page
+                      _pageController.nextPage(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    }
+                  },
+                  child: Text(
+                    _currentIndex == 3 ? "I ACCEPT" : "Continue",
+                    style: TextStyle(
+                      color: _currentIndex == 3 ? Colors.white : AppColors.backgroundBase, // High contrast text based on button color
+                      fontSize: 16, letterSpacing: 1.2,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
+            ),
           ],
         ),
       ),
@@ -138,69 +138,69 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
 //Onboarding class layout skeleton for all the Slides :
 class OnboardingPage extends StatelessWidget {
- final IconData icon;
- final String title;
- final String description;
+  final IconData icon;
+  final String title;
+  final String description;
 
- const OnboardingPage({
-   super.key,
-   required this.icon,
-   required this.title,
-   required this.description,
- });
+  const OnboardingPage({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.description,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Slide Counter
-            Container(
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryBlue.withValues(alpha: 0.15),
-                    blurRadius: 20,
-                    spreadRadius: 5,
-                  ),
-                ],
-              ),
-              child: Icon(
-                icon,
-                size: 64,
-                color: AppColors.primaryBlue,
-              ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Slide Counter
+          Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceCard, // Swapped to token
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primaryBlue.withValues(alpha: 0.15),
+                  blurRadius: 20,
+                  spreadRadius: 5,
+                ),
+              ],
             ),
+            child: Icon(
+              icon,
+              size: 64,
+              color: AppColors.primaryBlue,
+            ),
+          ),
 
-            const SizedBox(height: 48),
-           //Heder text design
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white, fontSize: 24, letterSpacing: 1.1,
-                fontWeight: FontWeight.bold,
-              ),
+          const SizedBox(height: 48),
+          //Heder text design
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textPrimary, fontSize: 24, letterSpacing: 1.1, // Swapped to token
+              fontWeight: FontWeight.bold,
             ),
+          ),
 
-            const SizedBox(height: 16),
-            // Description Text Design
-            Text(
-              description,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF94A3B8),
-                fontSize: 15,
-                height: 1.6,
-              ),
+          const SizedBox(height: 16),
+          // Description Text Design
+          Text(
+            description,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppColors.textSecondary, // Swapped to token
+              fontSize: 15,
+              height: 1.6,
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -212,49 +212,47 @@ class LegalWarningSlide extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            //Gavel icon with subtle red/ember warning aura
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFFF3B30).withValues(alpha: 0.6), width: 2,
-                ),
-              ),
-              child: const Icon(
-                Icons.gavel_rounded,
-                size: 65,
-                color: Color(0xFFFF3B30),
+      padding: const EdgeInsets.all(32.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          //Gavel icon with subtle red/ember warning aura
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.surfaceCard, // Swapped to token
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.tacticalRed.withValues(alpha: 0.6), width: 2, // Swapped to token
               ),
             ),
+            child: const Icon(
+              Icons.gavel_rounded,
+              size: 65,
+              color: AppColors.tacticalRed, // Swapped to token
+            ),
+          ),
 
-            const SizedBox(height: 36),
-            const Text(
-              "Legal Warning & Compliance",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+          const SizedBox(height: 36),
+          const Text(
+            "Legal Warning & Compliance",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textPrimary, // Swapped to token
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(height: 16),
-            const Text(
-              "WARNING: False reporting or malicious pranks directed at emergency services carry severe legal penalties under Cameroonian law. Ensure all generated Incident Report represent valid threats.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFF94A3B8),
-                fontSize: 14, height: 1.5,
-              ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "WARNING: False reporting or malicious pranks directed at emergency services carry severe legal penalties under Cameroonian law. Ensure all generated Incident Report represent valid threats.",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: AppColors.textSecondary, // Swapped to token
+              fontSize: 14, height: 1.5,
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 }
-
-

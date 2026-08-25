@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_map: ^8.3.1      # The OpenStreetMap engine
   latlong2: ^0.10.1         # GPS Coordinate handler
+  pinput: ^3.0.1
     # --- NEW FRONTEND HARDWARE APIs ---
   geolocator: ^13.0.1         # Live GPS Tracking
   image_picker: ^1.1.2        # Camera & Gallery Access

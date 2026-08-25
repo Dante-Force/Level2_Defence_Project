@@ -10,6 +10,8 @@ import 'package:sos_defence_project/soswidgets/app_drawer.dart';
 import 'package:sos_defence_project/soswidgets/incident_category_carousel.dart';
 import 'package:sos_defence_project/soswidgets/live_map_view.dart';
 
+import 'package:sos_defence_project/soswidgets/sos_trigger_overlay.dart';
+
 class VisitorHomeScreen extends StatefulWidget {
   const VisitorHomeScreen({super.key});
 
@@ -34,17 +36,19 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scafoldKey, //Attaching the remote control to this screen
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: AppColors.backgroundBase, // Swapped to token
       extendBody: true, //to push the map behind the bottom navbar
 
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F172A),
+        backgroundColor: AppColors.backgroundBase, // Swapped to token
         elevation: 0,
         automaticallyImplyLeading: false, // hides the default left side menu icon
         title: const Text(
           "SOS Report App",
           style: TextStyle(
-            color: Colors.white, letterSpacing: 1.5, fontSize: 16,
+            color: AppColors.textPrimary, // Swapped to token
+            letterSpacing: 1.5,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -52,7 +56,7 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
         actions: [
           //right side menu icon
           IconButton(
-            icon: const Icon(Icons.menu_rounded, color: Colors.white),
+            icon: const Icon(Icons.menu_rounded, color: AppColors.textPrimary), // Swapped to token
             onPressed: (){
               //asking the declared key drawer to slide out
               _scafoldKey.currentState?.openDrawer();
@@ -81,32 +85,32 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
         children: [
 
           // LAYER A : The Map of OpenStreetMap API via Flutter_map
-          const Positioned.fill(
-              child: LiveMapView(),
+          Positioned.fill(
+            child: LiveMapView(isAuthenticated: _isAuthenticated,),
           ),
 
           // LAYER B : The Blur Overlay to prevent visitor from seeing the Map
           if (!_isAuthenticated)
-          Positioned.fill(
+            Positioned.fill(
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 8.0, sigmaY: 8.0),
                 child: Container(
-                  color: const Color(0xFF0F172A).withValues(alpha: 0.5),
+                  color: AppColors.backgroundBase.withValues(alpha: 0.5), // Swapped to token
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.lock_outline_rounded, size: 64, color: Color(0xFF94A3B8)),
+                        const Icon(Icons.lock_outline_rounded, size: 64, color: AppColors.textMuted), // Swapped to token
                         const SizedBox(height: 16),
                         const Text(
                           "Map View Locked",
-                          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold), // Swapped to token
                         ),
                         const SizedBox(height: 8),
 
                         const Text(
                           "Authenticate to view live heatmap and to Report Incidents.",
-                          style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 14), // Swapped to token
                         ),
                         const SizedBox(height: 32),
 
@@ -117,35 +121,35 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
                           children: [
                             //Log In Button
                             OutlinedButton(
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Color(0xFF38BDF8), width: 2),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                ),
-                                onPressed: () async {
-                                  //wait for the log in screen to return its "sticky note" (true or false)
-                                  final dynamic result = await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                                  );
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: AppColors.primaryBlue, width: 2), // Swapped to token
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadiusGeometry.circular(12)),
+                                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              ),
+                              onPressed: () async {
+                                //wait for the log in screen to return its "sticky note" (true or false)
+                                final dynamic result = await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                );
 
-                                  // if login successful, updating home page state
-                                  if (result != null && result is Map) {
-                                    setState(() {
-                                      _isAuthenticated = true;
-                                      _currentUserName = "verified Citizen"; // name not needed for log in into its account
-                                      _currentUserPhone = result['phone'];
-                                    });
-                                  }
-                                },
-                                child:const Text("Log In", style: TextStyle(color: Color(0xFF38BDF8), fontWeight: FontWeight.bold)),
+                                // if login successful, updating home page state
+                                if (result != null && result is Map) {
+                                  setState(() {
+                                    _isAuthenticated = true;
+                                    _currentUserName = "verified Citizen"; // name not needed for log in into its account
+                                    _currentUserPhone = result['phone'];
+                                  });
+                                }
+                              },
+                              child: const Text("Log In", style: TextStyle(color: AppColors.primaryBlue, fontWeight: FontWeight.bold)), // Swapped to token
                             ),
                             const SizedBox(height: 12),
 
                             //Create Account Button
                             ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF38BDF8),
+                                backgroundColor: AppColors.primaryBlue, // Swapped to token
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                               ),
@@ -165,7 +169,7 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
                                   });
                                 }
                               },
-                              child: const Text("Create Account", style: TextStyle(color: Color(0xFF0F172A), fontWeight: FontWeight.bold)),
+                              child: const Text("Create Account", style: TextStyle(color: AppColors.backgroundBase, fontWeight: FontWeight.bold)), // Swapped to token
                             ),
                           ],
                         ),
@@ -174,7 +178,7 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
                   ),
                 ),
               ),
-          ),
+            ),
           // LAYER 2.5: Dark Gradient Shield (Ensures text/cards are always visible)
           if (_isAuthenticated)
             Positioned(
@@ -187,8 +191,8 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
                     end: Alignment.bottomCenter,
                     colors: [
                       Colors.transparent,
-                      const Color(0xFF0F172A).withValues(alpha: 0.8),
-                      const Color(0xFF0F172A),
+                      AppColors.backgroundBase.withValues(alpha: 0.8), // Swapped to token
+                      AppColors.backgroundBase, // Swapped to token
                     ],
                   ),
                 ),
@@ -216,33 +220,50 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
       //SOS BUTTON breaking out of the bar
       floatingActionButton: _isAuthenticated
 
-      ? Container(
+          ? Container(
         width: 75,
         height: 75,
         //==margin: const EdgeInsets.only(top: 32), // Pushes it slightly down into the bar
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: const Color(0xFFFF3B30),
+          color: AppColors.tacticalRed, // Swapped to token
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFFF3B30).withValues(alpha: 0.4),
+              color: AppColors.tacticalRed.withValues(alpha: 0.4), // Swapped to token
               blurRadius: 16,
               spreadRadius: 4,
             ),
           ],
         ),
         child: IconButton(
-          icon: const Icon(Icons.sos_rounded, size: 36, color: Colors.white),
-          onPressed: () {
-            debugPrint("Massive SOS Triggered!");
+          icon: const Icon(Icons.sos_rounded, size: 36, color: Colors.white), // Kept pure white for strict SOS contrast
+          onPressed: () async {
+            // Trigger the full-screen SOS Engine
+            final bool? broadcastSuccess = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SOSTriggerOverlay(),
+                fullscreenDialog: true, // Makes it slide up like a critical modal
+              ),
+            );
+            // If the sequence finished without being aborted
+            if (broadcastSuccess == true) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("CRITICAL SOS BROADCASTED. Emergency services have been notified."),
+                  backgroundColor: AppColors.successGreen, // Shows success on the map
+                  duration: Duration(seconds: 5),
+                ),
+              );
+            }
           },
         ),
       )
-      : null,
+          : null,
 
       //The bottom navigation bar itself
       bottomNavigationBar: BottomAppBar(
-        color: const Color(0xFF0F172A),
+        color: AppColors.backgroundBase, // Swapped to token
         height: 60,
         shape: const CircularNotchedRectangle(),
         notchMargin: 8.0,
@@ -250,30 +271,30 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             IconButton(
-                onPressed: (){},
+              onPressed: (){},
               icon: const Icon(Icons.home_rounded, size: 28),
-              color: const Color(0xFF38BDF8),
+              color: AppColors.primaryBlue, // Swapped to token
             ),
             const SizedBox(width: 48), //empty middle space for SOS button to stand easily
 
             IconButton(
               icon: _hasUnreadAlerts
                   ? const Badge(
-                      backgroundColor: Color(0xFFFF3B30),
-                      smallSize: 8,
-                      child: Icon(Icons.notifications_rounded, size: 28),
-                    )
+                backgroundColor: AppColors.tacticalRed, // Swapped to token
+                smallSize: 8,
+                child: Icon(Icons.notifications_rounded, size: 28),
+              )
                   : const Icon(Icons.notifications_rounded, size: 28),
-              color: const Color(0xFF94A3B8),
+              color: AppColors.textMuted, // Swapped to token
               onPressed: () {
                 setState(() {
                   _hasUnreadAlerts = false; // clears notif when already read
                 });
                 Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => AlertsScreen(isAuthenticated: _isAuthenticated),
-                    ),
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AlertsScreen(isAuthenticated: _isAuthenticated),
+                  ),
                 );
               },
             ),
@@ -282,6 +303,4 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
       ),
     );
   }
-
-
 }

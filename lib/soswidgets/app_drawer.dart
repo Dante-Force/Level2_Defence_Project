@@ -22,33 +22,34 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: AppColors.surfaceCard, // Swapped to token
       width: 250,
       child: SafeArea(
         child: Column(
           children: [
             //Top : user info
             UserAccountsDrawerHeader(
-              decoration: BoxDecoration( color: Color(0xFF0F172A)),
+              decoration: const BoxDecoration(color: AppColors.backgroundBase), // Swapped to token
               //Dynamic Account Name:
               accountName: Text(
                 isAuthenticated ? userName : "Visitor Mode",
-                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary), // Swapped to token
               ),
               accountEmail: Text(
                 isAuthenticated ? userPhone : "Unauthenticated Guest Session",
-                style: TextStyle(color: Color(0xFF94A3B8)),),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Color(0xFF38BDF8),
-                child: Icon(Icons.person, color: Colors.white, size: 50,),
+                style: const TextStyle(color: AppColors.textMuted), // Swapped to token
+              ),
+              currentAccountPicture: const CircleAvatar(
+                backgroundColor: AppColors.primaryBlue, // Swapped to token
+                child: Icon(Icons.person, color: AppColors.backgroundBase, size: 50,), // Swapped to contrast color
               ),
             ),
 
             // LogOut Button visible if authenticated
             if (isAuthenticated)
               ListTile(
-                leading: const Icon(Icons.logout_rounded, color: Color(0xFFFF3B30)),
-                title: const Text('Log Out', style: TextStyle(color: Color(0xFFFF3B30), fontWeight: FontWeight.bold)),
+                leading: const Icon(Icons.logout_rounded, color: AppColors.tacticalRed), // Swapped to token
+                title: const Text('Log Out', style: TextStyle(color: AppColors.tacticalRed, fontWeight: FontWeight.bold)), // Swapped to token
                 onTap: (){
                   onLogout(); // Triggers the state change function on the Homepage!
                   Navigator.pop(context);// closes the drawer automatically
@@ -61,7 +62,7 @@ class AppDrawer extends StatelessWidget {
               padding: EdgeInsets.all(24.0),
               child: Text("WARNING: False reporting carries strict legal penalties under Cameroonian law.",
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF38BDF8), fontWeight: FontWeight.bold, fontSize: 11, height: 1.5,
+                style: TextStyle(color: AppColors.primaryBlue, fontWeight: FontWeight.bold, fontSize: 11, height: 1.5, // Swapped to token
                 ),
               ),
             ),
