@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '/screens/theme/app_colors.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});

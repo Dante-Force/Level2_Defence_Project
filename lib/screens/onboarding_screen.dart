@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '/screens/theme/app_colors.dart';
 import 'package:sos_defence_project/screens/visitor_home_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -23,7 +24,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       // Deep Midnight Blue (#0F172A), my app base color theme 1
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: AppColors.backgroundBase,
 
       body: SafeArea(
         child: Column(
@@ -163,7 +164,7 @@ class OnboardingPage extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                    color: AppColors.primaryBlue.withValues(alpha: 0.15),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
@@ -172,7 +173,7 @@ class OnboardingPage extends StatelessWidget {
               child: Icon(
                 icon,
                 size: 64,
-                color: const Color(0xFF38BDF8),
+                color: AppColors.primaryBlue,
               ),
             ),
 

@@ -1,5 +1,6 @@
 //for the Image filter.blur widget usage, this library is important
 import 'dart:ui';
+import '/screens/theme/app_colors.dart';
 
 import 'package:flutter/material.dart';
 import 'package:sos_defence_project/screens/alerts_screen.dart';
@@ -7,6 +8,7 @@ import 'package:sos_defence_project/screens/login_screen.dart';
 import 'package:sos_defence_project/screens/signup_screen.dart';
 import 'package:sos_defence_project/soswidgets/app_drawer.dart';
 import 'package:sos_defence_project/soswidgets/incident_category_carousel.dart';
+import 'package:sos_defence_project/soswidgets/live_map_view.dart';
 
 class VisitorHomeScreen extends StatefulWidget {
   const VisitorHomeScreen({super.key});
@@ -33,6 +35,7 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
     return Scaffold(
       key: _scafoldKey, //Attaching the remote control to this screen
       backgroundColor: const Color(0xFF0F172A),
+      extendBody: true, //to push the map behind the bottom navbar
 
       appBar: AppBar(
         backgroundColor: const Color(0xFF0F172A),
@@ -77,14 +80,9 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
       body: Stack(
         children: [
 
-          // LAYER A : the map Placeholder
-          Positioned.fill(
-              child: Container(
-                color: const Color(0xFF0B1120),
-                child: const Center(
-                  child: Icon(Icons.map_outlined, size: 100, color: Color(0xFF1E293B)),
-                ),
-              ),
+          // LAYER A : The Map of OpenStreetMap API via Flutter_map
+          const Positioned.fill(
+              child: LiveMapView(),
           ),
 
           // LAYER B : The Blur Overlay to prevent visitor from seeing the Map
@@ -177,11 +175,30 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
                 ),
               ),
           ),
+          // LAYER 2.5: Dark Gradient Shield (Ensures text/cards are always visible)
+          if (_isAuthenticated)
+            Positioned(
+              bottom: 0, left: 0, right: 0,
+              height: 250, // Covers the bottom section
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      const Color(0xFF0F172A).withValues(alpha: 0.8),
+                      const Color(0xFF0F172A),
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
           // LAYER C : Horizontal Caterogies report Bar
           if (_isAuthenticated)
             const Positioned(
-              bottom: 24,
+              bottom: 80,
               left: 0,
               right: 0,
               //calling my external widget isolated for incident categories
@@ -197,10 +214,12 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
 
       //SOS BUTTON breaking out of the bar
-      floatingActionButton: Container(
-        width: 72,
-        height: 72,
-        margin: const EdgeInsets.only(top: 32), // Pushes it slightly down into the bar
+      floatingActionButton: _isAuthenticated
+
+      ? Container(
+        width: 75,
+        height: 75,
+        //==margin: const EdgeInsets.only(top: 32), // Pushes it slightly down into the bar
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: const Color(0xFFFF3B30),
@@ -218,7 +237,8 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
             debugPrint("Massive SOS Triggered!");
           },
         ),
-      ),
+      )
+      : null,
 
       //The bottom navigation bar itself
       bottomNavigationBar: BottomAppBar(
@@ -263,27 +283,5 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
     );
   }
 
-  //// WIDGET BUILDER CREATION function for the Report Incident Cards
- Widget _buildQuickActionBtn(IconData icon, String label, Color iconColor) {
-    return Container(
-      width: 80,
-      margin: EdgeInsets.symmetric(horizontal: 8.0),
-      padding: EdgeInsets.symmetric(vertical: 16.0),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B).withValues(alpha: 0.7),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, color: iconColor, size: 28),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600,),
-          ),
-        ],
-      ),
-    );
- }
+
 }

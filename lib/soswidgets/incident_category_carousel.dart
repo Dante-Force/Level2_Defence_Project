@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
+import '/screens/theme/app_colors.dart';
 
 class IncidentCategoryCarousel extends StatefulWidget {
   const IncidentCategoryCarousel({super.key});
@@ -37,12 +39,12 @@ class _IncidentCategoryCarouselState extends State<IncidentCategoryCarousel> {
           padding: EdgeInsets.symmetric(horizontal: 24.0),
           child: Text(
             "Report Incidents",
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+            style: TextStyle(color: Color(0xFF1E293B), fontWeight: FontWeight.bold, fontSize: 25, letterSpacing: 1.2),
           ),
         ),
         const SizedBox(height: 16),
         SizedBox(
-          height: 150,
+          height: 200,
           child: PageView.builder(
             controller: _categoryController,
             physics: const BouncingScrollPhysics(),
@@ -69,42 +71,73 @@ class _IncidentCategoryCarouselState extends State<IncidentCategoryCarousel> {
                   }
                 },
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
+                  duration: const Duration(milliseconds: 400),
                   curve: Curves.easeOut,
                   margin: EdgeInsets.symmetric(
                     horizontal: isFocused ? 4.0 : 12.0,
                     vertical: isFocused ? 0 : 16.0,
                   ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E293B).withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      //only the focused card gets a colored glowing border to pop forward
-                      color: isFocused ? _categories[index]["color"].withValues(alpha: 0.8) : Colors.white.withValues(alpha: 0.05),
-                      width:  isFocused ? 2 : 1,
+                    child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // True Frosted Glass Blur
+                          //=============================================
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E293B).withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isFocused
+                                    ? _categories[index]['color']
+                                    : Colors.white.withValues(alpha: 0.1),
+                                width: isFocused ? 2 : 1,
+                              ),
+                            ),
+                            // WE UPGRADED TO A STACK TO LAYER THE WATERMARK BEHIND THE TEXT
+                            child: Stack(
+                              children: [
+                                // 1. THE FADED WATERMARK BACKGROUND
+                                Positioned(
+                                  right: -15, // Pushes it slightly off the edge for style
+                                  bottom: -15, // Pushes it slightly down
+                                  child: Icon(
+                                    _categories[index]['icon'],
+                                    color: Colors.white.withValues(alpha: 0.08), // Highly transparent
+                                    size: isFocused ? 110 : 80, // Massive symbolic size
+                                  ),
+                                ),
+
+                                // 2. THE MAIN FOREGROUND CONTENT
+                                Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        _categories[index]['icon'],
+                                        color: _categories[index]['color'],
+                                        size: isFocused ? 42 : 28,
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        _categories[index]['label'],
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: isFocused ? 14 : 12,
+                                          fontWeight: FontWeight.bold,
+                                          shadows: const [
+                                            Shadow(color: Colors.black, blurRadius: 4)
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          //=========================
+              ),
                     ),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-
-                    children: [
-                      Icon(
-                        _categories[index]["icon"],
-                        color: _categories[index]["color"],
-                        size: isFocused ? 40 : 20,
-                      ),
-                      const SizedBox(height: 12),
-
-                      Text(
-                        _categories[index]["label"],
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: isFocused ? FontWeight.bold : FontWeight.normal,
-                          fontSize: isFocused ? 14 : 12,
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               );
             },

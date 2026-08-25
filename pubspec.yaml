@@ -34,8 +34,12 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  flutter_map: ^6.1.0      # The OpenStreetMap engine
-  latlong2: ^0.9.0         # GPS Coordinate handler
+  flutter_map: ^8.3.1      # The OpenStreetMap engine
+  latlong2: ^0.10.1         # GPS Coordinate handler
+    # --- NEW FRONTEND HARDWARE APIs ---
+  geolocator: ^13.0.1         # Live GPS Tracking
+  image_picker: ^1.1.2        # Camera & Gallery Access
+  permission_handler: ^11.3.1 # Android/iOS Security Permissions
 
 dev_dependencies:
   flutter_test:

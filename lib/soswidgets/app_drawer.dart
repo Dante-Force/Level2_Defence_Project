@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '/screens/theme/app_colors.dart';
 
 class AppDrawer extends StatelessWidget {
   // Role based Access Control for visitor vs citizen

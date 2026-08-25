@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sos_defence_project/screens/login_screen.dart';
+import '/screens/theme/app_colors.dart';
 
 class AlertsScreen extends StatefulWidget {
   // we recive the authentication status from the homepage
