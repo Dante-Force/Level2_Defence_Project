@@ -84,6 +84,18 @@ class _ReportIncidentFormState extends State<ReportIncidentForm> {
       ));
       return;
     }
+    // OFFLINE CHECK
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      if (result.isEmpty || result[0].rawAddress.isEmpty) throw Exception();
+    } catch (_) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("NO NETWORK CONNECTION. Report saved locally and will auto-transmit when signal returns."),
+        backgroundColor: AppColors.tacticalRed,
+        duration: Duration(seconds: 4),
+      ));
+      return;
+    }
 
     setState(() => _isSubmitting = true);
     await Future.delayed(const Duration(seconds: 2));

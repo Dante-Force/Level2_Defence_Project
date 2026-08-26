@@ -1,6 +1,7 @@
 //for the Image filter.blur widget usage, this library is important
 import 'dart:ui';
 import '/screens/theme/app_colors.dart';
+import 'dart:io'; //for network check
 
 import 'package:flutter/material.dart';
 import 'package:sos_defence_project/screens/alerts_screen.dart';
@@ -238,6 +239,23 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
         child: IconButton(
           icon: const Icon(Icons.sos_rounded, size: 36, color: Colors.white), // Kept pure white for strict SOS contrast
           onPressed: () async {
+            // --- NEW OFFLINE CHECK INJECTED HERE ---
+            try {
+              final result = await InternetAddress.lookup('google.com');
+              if (result.isEmpty || result[0].rawAddress.isEmpty) throw Exception();
+            } catch (_) {
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text("NO NETWORK CONNECTION: Call 117 directly!"),
+                  backgroundColor: AppColors.tacticalRed,
+                  duration: Duration(seconds: 5),
+                ),
+              );
+              return; // Stops the SOS sequence if offline
+            }
+            // ---------------------------------------
+
             // Trigger the full-screen SOS Engine
             final bool? broadcastSuccess = await Navigator.push(
               context,
@@ -248,6 +266,7 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
             );
             // If the sequence finished without being aborted
             if (broadcastSuccess == true) {
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text("CRITICAL SOS BROADCASTED. Emergency services have been notified."),

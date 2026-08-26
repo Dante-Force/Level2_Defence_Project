@@ -215,17 +215,6 @@ class _LiveMapViewState extends State<LiveMapView> {
             )).toList(),
           ),
 
-          // UPGRADED: DYNAMIC PERMANENT ROUTE LINE
-          if (_closestIncident != null)
-            PolylineLayer(
-              polylines: [
-                Polyline(
-                  points: [_currentPosition, _closestIncident!],
-                  color: AppColors.primaryBlue.withValues(alpha: 0.8),
-                  strokeWidth: 4.0,
-                ),
-              ],
-            ),
 
           MarkerLayer(
             markers: _activeIncidents.map((incident) => Marker(
