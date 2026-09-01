@@ -53,13 +53,17 @@ class _VisualEvidencePickerState extends State<VisualEvidencePicker> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Row(
+         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              "Visual Evidence (MANDATORY)*",
-              style: TextStyle(color: AppColors.tacticalRed, fontSize: 16, fontWeight: FontWeight.bold),
+            Expanded(
+              child: Text(
+                "Visual Evidence (MANDATORY)*",
+                style: TextStyle(color: AppColors.tacticalRed, fontSize: 16, fontWeight: FontWeight.bold),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
+            const SizedBox(width: 8),
             Text("Select 1 or both", style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
           ],
         ),

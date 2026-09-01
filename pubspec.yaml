@@ -41,6 +41,8 @@ dependencies:
   geolocator: ^13.0.1         # Live GPS Tracking
   image_picker: ^1.1.2        # Camera & Gallery Access
   permission_handler: ^11.3.1 # Android/iOS Security Permissions
+  http: ^1.2.0               # REST API Communication
+  shared_preferences: ^2.2.2 # Sanctum Token Local Storage
 
 dev_dependencies:
   flutter_test:

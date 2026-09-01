@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import '/screens/theme/app_colors.dart';
 import '/soswidgets/visual_evidence_picker.dart'; // YOUR NEW WIDGET
 
+//for live reporting processing
+import 'package:geolocator/geolocator.dart';
+import '/services/api_service.dart';
+
 class ReportIncidentForm extends StatefulWidget {
   final String categoryName;
   final IconData categoryIcon;
@@ -67,7 +71,7 @@ class _ReportIncidentFormState extends State<ReportIncidentForm> {
     });
   }
 
-  // Submission Logic
+  // Submission Logic connected to live ApiService & GPS
   Future<void> _submitReport() async {
     if (!_hasAudio) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -84,29 +88,47 @@ class _ReportIncidentFormState extends State<ReportIncidentForm> {
       ));
       return;
     }
-    // OFFLINE CHECK
-    try {
-      final result = await InternetAddress.lookup('google.com');
-      if (result.isEmpty || result[0].rawAddress.isEmpty) throw Exception();
-    } catch (_) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("NO NETWORK CONNECTION. Report saved locally and will auto-transmit when signal returns."),
-        backgroundColor: AppColors.tacticalRed,
-        duration: Duration(seconds: 4),
-      ));
-      return;
-    }
 
     setState(() => _isSubmitting = true);
-    await Future.delayed(const Duration(seconds: 2));
+
+    // Fetch live GPS location or default to Yaoundé coordinates
+    double lat = 3.8480;
+    double lng = 11.5021;
+
+    try {
+      Position pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      lat = pos.latitude;
+      lng = pos.longitude;
+    } catch (e) {
+      debugPrint("Using default Yaoundé coordinates: $e");
+    }
+
+    final success = await ApiService.submitIncident(
+      category: widget.categoryName,
+      description: _descriptionController.text.trim().isEmpty
+          ? "${widget.categoryName} emergency reported with mandatory evidence."
+          : _descriptionController.text.trim(),
+      latitude: lat,
+      longitude: lng,
+      mediaFile: _finalPhoto ?? _finalVideo,
+    );
+
+    setState(() => _isSubmitting = false);
+
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-      content: Text("Alert broadcasted successfully. Nearby citizens notified."),
-      backgroundColor: AppColors.successGreen,
-    ));
-
-    Navigator.pop(context);
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Alert broadcasted to server! AI Triage active."),
+        backgroundColor: AppColors.successGreen,
+      ));
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Transmission failed. Ensure backend server is online."),
+        backgroundColor: AppColors.tacticalRed,
+      ));
+    }
   }
 
   @override
@@ -159,7 +181,14 @@ class _ReportIncidentFormState extends State<ReportIncidentForm> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text("Voice Audio (MANDATORY)*", style: TextStyle(color: AppColors.tacticalRed, fontSize: 16, fontWeight: FontWeight.bold)),
+                Expanded(
+                    child:  Text(
+                        "Voice Audio (MANDATORY)*",
+                        style: TextStyle(color: AppColors.tacticalRed, fontSize: 16, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ),
+                const SizedBox(width: 8),
                 const Text("Max 10s", style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
               ],
             ),

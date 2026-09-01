@@ -132,7 +132,7 @@ class _LiveMapViewState extends State<LiveMapView> {
             children: [
               const Row(
                 children: [
-                  Icon(Icons.local_fire_department, color: AppColors.tacticalRed, size: 28),
+                  Icon(Icons.local_fire_department, color: AppColors.tacticalOrange, size: 28),
                   SizedBox(width: 12),
                   Text(
                     "Active Emergency",

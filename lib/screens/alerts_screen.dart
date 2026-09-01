@@ -30,7 +30,7 @@ class _AlertsScreenState extends State<AlertsScreen> {
       "location": "Mokolo Market, Sector 4",
       'time': '15 mins ago',
       'icon': Icons.local_fire_department_rounded,
-      'color': AppColors.tacticalRed, // Fire Orange / Red
+      'color': AppColors.tacticalOrange, // Fire Orange / Red
       'isNearby': false, // Too far away. Buttons will be locked.
     },
     {

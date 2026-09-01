@@ -17,7 +17,7 @@ class _IncidentCategoryCarouselState extends State<IncidentCategoryCarousel> {
   // Cleaned data model - removed the heavy background images
   final List<Map<String, dynamic>> _categories = [
     {'icon': Icons.local_police, 'label': 'Police', 'color': AppColors.primaryBlue},
-    {'icon': Icons.local_fire_department, 'label': 'Firefighter', 'color': AppColors.tacticalRed},
+    {'icon': Icons.local_fire_department, 'label': 'Firefighter', 'color': AppColors.tacticalOrange},
     {'icon': Icons.local_hospital, 'label': 'Medical', 'color': AppColors.successGreen},
     {'icon': Icons.security, 'label': 'Military', 'color': const Color(0xFF64748B)},
     {'icon': Icons.bug_report, 'label': 'MyDemo', 'color': const Color(0xFF8B5CF6)},
