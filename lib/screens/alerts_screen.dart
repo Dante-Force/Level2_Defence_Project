@@ -1,11 +1,13 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sos_defence_project/screens/login_screen.dart';
 import '/screens/theme/app_colors.dart';
 
 class AlertsScreen extends StatefulWidget {
-  // we recive the authentication status from the homepage
   final bool isAuthenticated;
-
   const AlertsScreen({super.key, required this.isAuthenticated});
 
   @override
@@ -13,105 +15,147 @@ class AlertsScreen extends StatefulWidget {
 }
 
 class _AlertsScreenState extends State<AlertsScreen> {
-  //Mock Backend data for the defense MVP
-  // the "isNearby" boolean simulates the GPS proximity logic
-  final List<Map<String, dynamic>> _mockIncidents = [
-    {
-      "category": "Medical Emergency",
-      //the capital letter 'L' makes this location unfoundable since the rest are in small letter
-      "Location": "Nlongkak Roundabout, Yaounde",
-      "time": "2 mins ago",
-      "icon": Icons.local_hospital_rounded,
-      "color": AppColors.successGreen, // Medical Green
-      "isNearby": true, // User is close enough to cpntest / confirm
-    },
-    {
-      'category': 'Fire Outbreak',
-      "location": "Mokolo Market, Sector 4",
-      'time': '15 mins ago',
-      'icon': Icons.local_fire_department_rounded,
-      'color': AppColors.tacticalOrange, // Fire Orange / Red
-      'isNearby': false, // Too far away. Buttons will be locked.
-    },
-    {
-      'category': 'Armed Robbery',
-      "location": "Bastos, near Embassy",
-      'time': '45 mins ago',
-      'icon': Icons.local_police_rounded,
-      'color': AppColors.primaryBlue, // Police Blue
-      'isNearby': false,
-    },
-  ];
+  List<dynamic> _incidents = [];
+  bool _isLoading = true;
+  Position? _currentPosition;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.isAuthenticated) {
+      _fetchLiveAlerts();
+    }
+  }
+
+  Future<void> _fetchLiveAlerts() async {
+    setState(() => _isLoading = true);
+    try {
+      // 1. Get exact GPS location to calculate distance
+      _currentPosition = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.high));
+
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      // 2. Fetch live and history incidents from your Laravel API
+      final response = await http.get(
+        Uri.parse(
+            'http://10.0.2.2:8000/api/incidents?latitude=${_currentPosition!
+                .latitude}&longitude=${_currentPosition!.longitude}'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          _incidents = json.decode(response.body);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching alerts: $e");
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundBase, // Midnight Blue
-
+      backgroundColor: AppColors.backgroundBase,
       appBar: AppBar(
         backgroundColor: AppColors.backgroundBase,
         elevation: 0,
         title: const Text(
           'LIVE REPORTED ALERTS',
-          style: TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.5),
+          style: TextStyle(color: AppColors.textPrimary,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5),
         ),
         centerTitle: true,
         iconTheme: const IconThemeData(color: AppColors.textPrimary),
       ),
-
-      // body display lock screen for visitors , else the normal alert scree.
       body: widget.isAuthenticated ? _buildAlertsList() : _buildLockedView(),
     );
   }
 
-  //// VIEW 1 / The visitor lock ,Screen
-  Widget _buildLockedView(){
+  Widget _buildLockedView() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-
         children: [
-           Icon(Icons.lock_outline_rounded, size: 80, color: AppColors.borderLight,),
+          const Icon(Icons.lock_outline_rounded, size: 80,
+              color: AppColors.borderLight),
           const SizedBox(height: 24),
           const Text(
             "Please log in to view current nearby alerts and history.",
-            textAlign: TextAlign.center, style: TextStyle(color: AppColors.textPrimary, fontSize: 16, height: 1.5),
+            textAlign: TextAlign.center,
+            style: TextStyle(
+                color: AppColors.textPrimary, fontSize: 16, height: 1.5),
           ),
           const SizedBox(height: 32),
-
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryBlue, // Civic Sky Blue
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              backgroundColor: AppColors.primaryBlue,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
               padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 14),
             ),
-            onPressed: (){
-              //route to log in. if successful, pop back to the homepage for global state update
+            onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const LoginScreen()),
               ).then((result) {
-                if (result == true) {
-                  Navigator.pop(context, true); // pass the success back to the homepage
-                }
+                if (result == true) Navigator.pop(context, true);
               });
             },
-            child: const Text('Log In', style: TextStyle(color: AppColors.backgroundBase, fontSize: 16, fontWeight: FontWeight.bold)),
+            child: const Text('Log In', style: TextStyle(
+                color: AppColors.backgroundBase,
+                fontSize: 16,
+                fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
 
-  ////VIEW 2 : Citizen Alerts screen
-
   Widget _buildAlertsList() {
+    if (_isLoading) {
+      return const Center(
+          child: CircularProgressIndicator(color: AppColors.primaryBlue));
+    }
+
+    if (_incidents.isEmpty) {
+      return const Center(
+        child: Text("No alerts in your area. Stay safe!",
+            style: TextStyle(color: AppColors.textSecondary)),
+      );
+    }
+
     return ListView.builder(
         padding: const EdgeInsets.all(16.0),
-        itemCount: _mockIncidents.length,
+        itemCount: _incidents.length,
         itemBuilder: (context, index) {
-          final incident = _mockIncidents[index];
-          final bool isNearby = incident["isNearby"];
+          final incident = _incidents[index];
+
+// Parse PostGIS coordinates (Magellan returns GeoJSON format: [longitude, latitude])
+          final coords = incident['location']['coordinates'];
+          double incidentLat = coords[1];
+          double incidentLng = coords[0];
+
+// Calculate distance in meters
+          double distanceInMeters = Geolocator.distanceBetween(
+            _currentPosition!.latitude, _currentPosition!.longitude,
+            incidentLat, incidentLng,
+          );
+
+// LOGIC: Enable buttons ONLY if < 1km (1000m) AND incident is still ACTIVE
+          bool isNearby = distanceInMeters <= 1000;
+          bool isClosed = (incident['status'] == 'RESOLVED' ||
+              incident['status'] == 'FALSE_ALERT');
 
           return Container(
             margin: const EdgeInsets.only(bottom: 12.0),
@@ -119,50 +163,69 @@ class _AlertsScreenState extends State<AlertsScreen> {
             decoration: BoxDecoration(
               color: AppColors.surfaceCard,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.borderLight),
+// THE MISSING BRACKET WAS HERE:
+              border: Border.all(
+                color: isClosed
+                    ? AppColors.borderLight
+                    : AppColors.tacticalRed.withValues(alpha: 0.5),
+              ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
-                // 1. LEFT : Emergency services
+// 1. LEFT: Icon
                 Container(
-                  padding: const EdgeInsets.all(12), // Added const here for optimization
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: incident["color"].withValues(alpha: 0.15),
+// AND HERE:
+                    color: isClosed
+                        ? AppColors.textMuted.withValues(alpha: 0.2)
+                        : AppColors.tacticalOrange.withValues(alpha: 0.15),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(incident["icon"], color: incident["color"], size: 32),
+                  child: Icon(
+                      isClosed ? Icons.history : Icons.warning_amber_rounded,
+                      color: isClosed ? AppColors.textMuted : AppColors
+                          .tacticalOrange,
+                      size: 32
+                  ),
                 ),
                 const SizedBox(width: 16),
 
-                //2. MIDDLE : Incident details
+// 2. MIDDLE: Incident Details
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-
                     children: [
                       Text(
                         incident["category"],
-                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                            color: isClosed ? AppColors.textMuted : AppColors
+                                .textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold
+                        ),
                       ),
                       const SizedBox(height: 4),
-
                       Text(
-                        //to avoid RSOD (Red Screen of Dead) for a missing content that will unfortunately lead to a crash
-                        // The "??" tells flutter to print a message if incident["location'] is missing/null
-                        incident["location"] ?? "Location unavailable",
-                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        incident["description"] ?? "No description provided",
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: AppColors.textSecondary, fontSize: 13),
                       ),
                       const SizedBox(height: 8),
-
                       Row(
                         children: [
-                          const Icon(Icons.access_time_rounded, color: AppColors.textMuted, size: 14),
+                          Icon(Icons.location_on,
+                              color: isClosed ? AppColors.textMuted : AppColors
+                                  .primaryBlue, size: 14),
                           const SizedBox(width: 4),
                           Text(
-                            incident["time"],
-                            style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                            "${(distanceInMeters / 1000).toStringAsFixed(
+                                1)} km away",
+                            style: const TextStyle(color: AppColors.textMuted,
+                                fontSize: 12),
                           ),
                         ],
                       ),
@@ -170,44 +233,66 @@ class _AlertsScreenState extends State<AlertsScreen> {
                   ),
                 ),
 
-                //3. RIGHT : Proximity based action buttons
-                Column(
-                  children: [
-                    // Confirm Button
-                    OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: isNearby ? AppColors.successGreen : AppColors.borderLight, // Green if nearby, grey if far
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      onPressed: isNearby ? () => debugPrint("Incident Confirmed !") : null, // null disables the button
-                      child: Text("Confirm", style: TextStyle(color: isNearby ? AppColors.successGreen : AppColors.textMuted, fontSize: 12)),
+// 3. RIGHT: Action Buttons OR Closed Badge
+                if (isClosed)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.borderLight,
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    const SizedBox(height: 8),
-
-                    //CONTEST Button
-                    OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: isNearby ? AppColors.tacticalRed : AppColors.borderLight, // Red if nearby, grey if far
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        minimumSize: Size.zero,
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                      onPressed: isNearby ? () => debugPrint("Incident Contested !") : null,
-                      child: Text("Contest", style: TextStyle(color: isNearby ? AppColors.tacticalRed : AppColors.textMuted, fontSize: 12)),
+                    child: Text(
+                      incident['status'] == 'RESOLVED'
+                          ? "RESOLVED"
+                          : "FALSE ALERT",
+                      style: const TextStyle(color: AppColors.textSecondary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold),
                     ),
-                  ],
-                ),
+                  )
+                else
+                  Column(
+                    children: [
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: isNearby
+                              ? AppColors.successGreen
+                              : AppColors.borderLight),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: isNearby ? () =>
+                            debugPrint("Vote Confirm Triggered") : null,
+                        child: Text("Confirm", style: TextStyle(
+                            color: isNearby ? AppColors.successGreen : AppColors
+                                .textMuted, fontSize: 12)),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: isNearby
+                              ? AppColors.tacticalRed
+                              : AppColors.borderLight),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 8),
+                          minimumSize: Size.zero,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                        onPressed: isNearby ? () =>
+                            debugPrint("Vote Contest Triggered") : null,
+                        child: Text("Contest", style: TextStyle(
+                            color: isNearby ? AppColors.tacticalRed : AppColors
+                                .textMuted, fontSize: 12)),
+                      ),
+                    ],
+                  ),
               ],
             ),
           );
         }
     );
   }
-
 }

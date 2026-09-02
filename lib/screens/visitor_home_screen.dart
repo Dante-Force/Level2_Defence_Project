@@ -1,17 +1,22 @@
 //for the Image filter.blur widget usage, this library is important
 import 'dart:ui';
-import '/screens/theme/app_colors.dart';
 import 'dart:io'; //for network check
+import 'dart:convert'; // NEW: For decoding the JSON score response
+import 'package:http/http.dart' as http; // NEW: For fetching the updated score
 
 import 'package:flutter/material.dart';
+import '/screens/theme/app_colors.dart';
 import 'package:sos_defence_project/screens/alerts_screen.dart';
 import 'package:sos_defence_project/screens/login_screen.dart';
 import 'package:sos_defence_project/screens/signup_screen.dart';
 import 'package:sos_defence_project/soswidgets/app_drawer.dart';
 import 'package:sos_defence_project/soswidgets/incident_category_carousel.dart';
 import 'package:sos_defence_project/soswidgets/live_map_view.dart';
-
 import 'package:sos_defence_project/soswidgets/sos_trigger_overlay.dart';
+
+//for the homepage to save the user's session locally
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/api_service.dart';
 
 class VisitorHomeScreen extends StatefulWidget {
   const VisitorHomeScreen({super.key});
@@ -21,7 +26,6 @@ class VisitorHomeScreen extends StatefulWidget {
 }
 
 class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
-
   //A "remote control" key so the right-side button can open the left-side drawer
   final GlobalKey<ScaffoldState> _scafoldKey = GlobalKey<ScaffoldState>();
 
@@ -32,6 +36,78 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
   //to implement user's profile dynamically
   String _currentUserName = "";
   String _currentUserPhone = "";
+  int _currentNavIndex = 0; // 0 = Map, 1 = Alerts
+
+  int? _previousTrustScore; // NEW: To track if your score went up!
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAutoLogin();
+
+    // NEW: Check for a score increase as soon as the home screen finishes loading
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkTrustScoreIncrease();
+    });
+  }
+
+  // --- NEW: REPUTATION REWARD POPUP ---
+  Future<void> _checkTrustScoreIncrease() async {
+    final token = await ApiService.getToken();
+    if (token == null) return; // Stop if they are a visitor (not logged in)
+
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:8000/api/user'),
+        headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final userData = json.decode(response.body);
+        int currentScore = userData['trust_score'] ?? 50; // Default to 50 if null
+
+        if (_previousTrustScore != null && currentScore > _previousTrustScore!) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: AppColors.successGreen,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              content: Row(
+                children: [
+                  const Icon(Icons.stars_rounded, color: Colors.white, size: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      "🎉 Congratulations! Your report was resolved. Your Trust Score is now $currentScore!",
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+        _previousTrustScore = currentScore;
+      }
+    } catch (e) {
+      debugPrint("Error checking trust score: $e");
+    }
+  }
+
+  // --- SILENT AUTO-LOGIN ---
+  Future<void> _checkAutoLogin() async {
+    final token = await ApiService.getToken();
+    if (token != null) {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _isAuthenticated = true;
+        _currentUserName = prefs.getString('user_name') ?? "Citizen";
+        _currentUserPhone = prefs.getString('user_phone') ?? "";
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,14 +116,17 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
       backgroundColor: AppColors.backgroundBase, // Swapped to token
       extendBody: true, //to push the map behind the bottom navbar
 
-      appBar: AppBar(
-        backgroundColor: AppColors.backgroundBase, // Swapped to token
+      // IF WE ARE ON THE MAP (Index 0), SHOW THIS APP BAR. OTHERWISE, SHOW NULL.
+      appBar: _currentNavIndex == 0
+          ? AppBar(
+        backgroundColor: AppColors.backgroundBase,
         elevation: 0,
-        automaticallyImplyLeading: false, // hides the default left side menu icon
+        automaticallyImplyLeading: false,
+        leading: const Icon(Icons.shield_rounded, color: AppColors.primaryBlue, size: 28),
         title: const Text(
           "SOS Report App",
           style: TextStyle(
-            color: AppColors.textPrimary, // Swapped to token
+            color: AppColors.textPrimary,
             letterSpacing: 1.5,
             fontSize: 16,
             fontWeight: FontWeight.bold,
@@ -55,25 +134,28 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
         ),
         centerTitle: true,
         actions: [
-          //right side menu icon
           IconButton(
-            icon: const Icon(Icons.menu_rounded, color: AppColors.textPrimary), // Swapped to token
+            icon: const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
             onPressed: (){
-              //asking the declared key drawer to slide out
               _scafoldKey.currentState?.openDrawer();
             },
           ),
         ],
-      ),
+      )
+          : null, // <--- THIS MAKES IT VANISH ON THE ALERTS SCREEN!
 
       // the LEFT SIDE Drawer menu section
-
       drawer: AppDrawer(
         isAuthenticated: _isAuthenticated,
         userName: _currentUserName,
         userPhone: _currentUserPhone,
-        onLogout: () {
-          // This code runs when the user taps "Log Out" inside the AppDrawer file
+        onLogout: () async {
+          // Wipe the token and saved profile data
+          await ApiService.clearToken();
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.remove('user_name');
+          await prefs.remove('user_phone');
+
           setState(() {
             _isAuthenticated = false;
           });
@@ -81,13 +163,18 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
       ),
 
       // the main body of the homepage view
-
       body: Stack(
         children: [
 
           // LAYER A : The Map of OpenStreetMap API via Flutter_map
           Positioned.fill(
-            child: LiveMapView(isAuthenticated: _isAuthenticated,),
+            child: IndexedStack(
+              index: _currentNavIndex,
+              children: [
+                LiveMapView(isAuthenticated: _isAuthenticated), // Index 0
+                AlertsScreen(isAuthenticated: _isAuthenticated), // Index 1
+              ],
+            ),
           ),
 
           // LAYER B : The Blur Overlay to prevent visitor from seeing the Map
@@ -118,7 +205,6 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
                         //The Button to Authenticate or Create Account via OTP
                         Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-
                           children: [
                             //Log In Button
                             OutlinedButton(
@@ -135,11 +221,11 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
                                 );
 
                                 // if login successful, updating home page state
-                                if (result != null && result is Map) {
+                                if (result != null && result is Map && result['user'] != null) {
                                   setState(() {
                                     _isAuthenticated = true;
-                                    _currentUserName = "verified Citizen"; // name not needed for log in into its account
-                                    _currentUserPhone = result['phone'];
+                                    _currentUserName = result['user']['name'];
+                                    _currentUserPhone = result['user']['phone_number'];
                                   });
                                 }
                               },
@@ -181,7 +267,8 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
               ),
             ),
           // LAYER 2.5: Dark Gradient Shield (Ensures text/cards are always visible)
-          if (_isAuthenticated)
+          // NEW: Fixed so it disappears on the Alert screen!
+          if (_isAuthenticated && _currentNavIndex == 0)
             Positioned(
               bottom: 0, left: 0, right: 0,
               height: 250, // Covers the bottom section
@@ -201,7 +288,8 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
             ),
 
           // LAYER C : Horizontal Caterogies report Bar
-          if (_isAuthenticated)
+          // NEW: Fixed so it disappears on the Alert screen!
+          if (_isAuthenticated && _currentNavIndex == 0)
             const Positioned(
               bottom: 80,
               left: 0,
@@ -220,11 +308,9 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
 
       //SOS BUTTON breaking out of the bar
       floatingActionButton: _isAuthenticated
-
           ? Container(
         width: 75,
         height: 75,
-        //==margin: const EdgeInsets.only(top: 32), // Pushes it slightly down into the bar
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: AppColors.tacticalRed, // Swapped to token
@@ -282,40 +368,46 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
 
       //The bottom navigation bar itself
       bottomNavigationBar: BottomAppBar(
-        color: AppColors.backgroundBase, // Swapped to token
+        color: AppColors.surfaceCard,
         height: 60,
         shape: const CircularNotchedRectangle(),
         notchMargin: 8.0,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
+            // MAP TAB
             IconButton(
-              onPressed: (){},
-              icon: const Icon(Icons.home_rounded, size: 28),
-              color: AppColors.primaryBlue, // Swapped to token
+              onPressed: () => setState(() => _currentNavIndex = 0),
+              icon: Icon(
+                  Icons.home_rounded,
+                  size: 28,
+                  color: _currentNavIndex == 0 ? AppColors.primaryBlue : AppColors.textMuted
+              ),
             ),
-            const SizedBox(width: 48), //empty middle space for SOS button to stand easily
 
+            const SizedBox(width: 48), // Space for SOS button
+            // ALERTS TAB
             IconButton(
+              onPressed: () {
+                setState(() {
+                  _hasUnreadAlerts = false;
+                  _currentNavIndex = 1;
+                });
+
+                // Also check for trust score updates when they click the Alerts tab!
+                _checkTrustScoreIncrease();
+              },
               icon: _hasUnreadAlerts
                   ? const Badge(
-                backgroundColor: AppColors.tacticalRed, // Swapped to token
+                backgroundColor: AppColors.tacticalRed,
                 smallSize: 8,
                 child: Icon(Icons.notifications_rounded, size: 28),
               )
-                  : const Icon(Icons.notifications_rounded, size: 28),
-              color: AppColors.textMuted, // Swapped to token
-              onPressed: () {
-                setState(() {
-                  _hasUnreadAlerts = false; // clears notif when already read
-                });
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AlertsScreen(isAuthenticated: _isAuthenticated),
-                  ),
-                );
-              },
+                  : Icon(
+                  Icons.notifications_rounded,
+                  size: 28,
+                  color: _currentNavIndex == 1 ? AppColors.primaryBlue : AppColors.textMuted
+              ),
             ),
           ],
         ),

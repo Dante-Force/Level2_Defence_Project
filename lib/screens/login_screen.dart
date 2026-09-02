@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'theme/app_colors.dart';
 import '../services/api_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../soswidgets/otp_verification_card.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -91,9 +92,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 OtpVerificationCard(
                   phoneNumber: _phoneController.text.trim(),
                   password: _passwordController.text.trim(),
-                  onSuccess: (result) {
-                    Navigator.pop(context, {'phone': _phoneController.text.trim()});
-                  },
+                    onSuccess: (result) async {
+                      // Save real user info to phone storage for future auto-logins
+                      if (result != null && result['user'] != null) {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setString('user_name', result['user']['name']);
+                        await prefs.setString('user_phone', result['user']['phone_number']);
+                      }
+                      Navigator.pop(context, result); // Return full data to homepage
+                    },
+
                   onCancel: () {
                     setState(() => _otpSent = false);
                   },
