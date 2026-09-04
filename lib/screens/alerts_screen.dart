@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sos_defence_project/screens/login_screen.dart';
 import '/screens/theme/app_colors.dart';
+import '../services/api_service.dart';
 
 class AlertsScreen extends StatefulWidget {
   final bool isAuthenticated;
@@ -59,11 +60,13 @@ class _AlertsScreenState extends State<AlertsScreen> {
       _currentPosition = pos;
 
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = await ApiService.getToken();
 
       // 2. Fetch live and history incidents from your Laravel API
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/api/incidents?latitude=${_currentPosition!.latitude}&longitude=${_currentPosition!.longitude}'),
+        Uri.parse('${ApiService.baseUrl}/incidents?'
+            'latitude=${_currentPosition!.latitude}&longitude=${_currentPosition!.longitude}'
+        ),
         headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',

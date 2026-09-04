@@ -6,9 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  // 10.0.2.2 is the special local IP for Android Emulator to connect to your PC server.
-  // If testing on a physical phone, replace 10.0.2.2 with your PC's Wi-Fi IP (e.g., 192.168.1.50).
-  static const String baseUrl = 'http://10.72.23.231:8000/api';
+  static const String baseUrl = 'http://10.164.81.231:8000/api';
 
   // --- TOKEN LOCAL STORAGE ---
   static Future<void> saveToken(String token) async {
@@ -40,7 +38,6 @@ class ApiService {
 
       return response.statusCode == 200;
     } catch (e) {
-      // THIS WILL TELL YOU THE EXACT NETWORK ERROR
       debugPrint("OTP Network Error: $e");
       return false;
     }
@@ -93,34 +90,52 @@ class ApiService {
     }
   }
 
-  // --- 4. SUBMIT INCIDENT REPORT WITH MEDIA ---
+  // --- 4. SUBMIT INCIDENT REPORT WITH MULTIPLE MEDIA (PHOTO/VIDEO + AUDIO) ---
   static Future<bool> submitIncident({
     required String category,
     required String description,
     required double latitude,
     required double longitude,
-    File? mediaFile,
+    List<File>? mediaFiles,
   }) async {
     try {
       final token = await getToken();
-      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/incidents'));
 
-      request.headers['Accept'] = 'application/json';
-      if (token != null) {
-        request.headers['Authorization'] = 'Bearer $token';
+      // LOG TOKEN STATUS CLEARLY IN DEBUG CONSOLE
+      if (token == null) {
+        debugPrint("CRITICAL AUTH ERROR: Sanctum token is NULL! Please log in via phone OTP first.");
+        return false;
+      } else {
+        debugPrint("Sanctum Token present: ${token.substring(0, 10)}...");
       }
+      var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/incidents'));
+      request.headers['Accept'] = 'application/json';
+      request.headers['Authorization'] = 'Bearer $token';
 
       request.fields['category'] = category;
       request.fields['description'] = description;
       request.fields['latitude'] = latitude.toString();
       request.fields['longitude'] = longitude.toString();
 
-      if (mediaFile != null) {
-        request.files.add(await http.MultipartFile.fromPath('media[]', mediaFile.path));
+      // Attach all media files (photos, videos, audio recordings)
+      if (mediaFiles != null) {
+        for (var file in mediaFiles) {
+          if (await file.exists()) {
+            request.files.add(await http.MultipartFile.fromPath('media[]', file.path));
+            debugPrint("Attached media file: ${file.path}");
+          } else {
+            debugPrint("WARNING: Media file not found on disk: ${file.path}");
+          }
+        }
       }
 
-      var streamedResponse = await request.send();
-      var response = await http.Response.fromStream(streamedResponse);
+      var streamedResponse = await request.send().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () => throw Exception("Upload timed out after 15 seconds. Check Wi-Fi connection."),
+      );
+      var response = await http.Response.fromStream(streamedResponse).timeout(
+        const Duration(seconds: 10),
+      );
 
       // PRINTS EXACT SERVER STATUS & ERROR REASON TO CONSOLE
       debugPrint("Submit Status Code: ${response.statusCode}");

@@ -96,12 +96,26 @@ class _ReportIncidentFormState extends State<ReportIncidentForm> {
     double lng = 11.5021;
 
     try {
-      Position pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      // 1. Check cached position first (Instant - 0.01s)
+      Position? pos = await Geolocator.getLastKnownPosition();
+      // 2. If no cache, request fresh position with a strict 4-second timeout
+      if (pos == null) {
+        pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.medium, // Fast Wi-Fi/Cell tower location
+        ).timeout(const Duration(seconds: 4));
+      }
       lat = pos.latitude;
       lng = pos.longitude;
+      debugPrint("GPS locked in: ($lat, $lng)");
     } catch (e) {
-      debugPrint("Using default Yaoundé coordinates: $e");
+      // 3. Fallback immediately to default Yaoundé center if indoors or GPS disabled
+      debugPrint("GPS timed out or unavailable, using fallback coordinates: $e");
     }
+
+    // Build list of all captured media (photo and/or video)
+    final List<File> mediaList = [];
+    if (_finalPhoto != null) mediaList.add(_finalPhoto!);
+    if (_finalVideo != null) mediaList.add(_finalVideo!);
 
     final success = await ApiService.submitIncident(
       category: widget.categoryName,
@@ -110,7 +124,7 @@ class _ReportIncidentFormState extends State<ReportIncidentForm> {
           : _descriptionController.text.trim(),
       latitude: lat,
       longitude: lng,
-      mediaFile: _finalPhoto ?? _finalVideo,
+      mediaFiles: mediaList.isNotEmpty ? mediaList : null,
     );
 
     setState(() => _isSubmitting = false);
@@ -125,7 +139,7 @@ class _ReportIncidentFormState extends State<ReportIncidentForm> {
       Navigator.pop(context);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text("Transmission failed. Ensure backend server is online."),
+        content: Text("Submission failed. Ensure you are logged in with your phone and OTP."),
         backgroundColor: AppColors.tacticalRed,
       ));
     }

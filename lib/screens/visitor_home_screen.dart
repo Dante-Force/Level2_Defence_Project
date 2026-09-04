@@ -18,6 +18,9 @@ import 'package:sos_defence_project/soswidgets/sos_trigger_overlay.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 
+import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import '/utils/app_tutorial.dart';
+
 class VisitorHomeScreen extends StatefulWidget {
   const VisitorHomeScreen({super.key});
 
@@ -28,6 +31,11 @@ class VisitorHomeScreen extends StatefulWidget {
 class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
   //A "remote control" key so the right-side button can open the left-side drawer
   final GlobalKey<ScaffoldState> _scafoldKey = GlobalKey<ScaffoldState>();
+  // GlobalKeys for the Interactive App Tutorial spotlight targets
+  final GlobalKey _menuButtonKey = GlobalKey();
+  final GlobalKey _sosButtonKey = GlobalKey();
+  final GlobalKey _mapTabKey = GlobalKey();
+  final GlobalKey _alertsTabKey = GlobalKey();
 
   //for the dynamic appearance of the red badge on the alert icon
   bool _hasUnreadAlerts = true;
@@ -58,7 +66,7 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:8000/api/user'),
+        Uri.parse('${ApiService.baseUrl}/user'),
         headers: {'Authorization': 'Bearer $token', 'Accept': 'application/json'},
       );
 
@@ -135,6 +143,7 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
         centerTitle: true,
         actions: [
           IconButton(
+            key: _menuButtonKey,
             icon: const Icon(Icons.menu_rounded, color: AppColors.textPrimary),
             onPressed: (){
               _scafoldKey.currentState?.openDrawer();
@@ -160,8 +169,8 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
             _isAuthenticated = false;
           });
         },
+        onStartTutorial: _startAppTutorial, // Launches interactive spotlight tour
       ),
-
       // the main body of the homepage view
       body: Stack(
         children: [
@@ -309,6 +318,7 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
       //SOS BUTTON breaking out of the bar
       floatingActionButton: _isAuthenticated
           ? Container(
+        key: _sosButtonKey,
         width: 75,
         height: 75,
         decoration: BoxDecoration(
@@ -377,6 +387,7 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
           children: [
             // MAP TAB
             IconButton(
+              key: _mapTabKey,
               onPressed: () => setState(() => _currentNavIndex = 0),
               icon: Icon(
                   Icons.home_rounded,
@@ -388,6 +399,7 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
             const SizedBox(width: 48), // Space for SOS button
             // ALERTS TAB
             IconButton(
+              key: _alertsTabKey,
               onPressed: () {
                 setState(() {
                   _hasUnreadAlerts = false;
@@ -414,4 +426,163 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
       ),
     );
   }
+
+  // -------------------------------------------------------
+  // INTERACTIVE APP TUTORIAL — Spotlight Feature Tour
+  // Triggered from the Drawer menu item
+  // -------------------------------------------------------
+  void _startAppTutorial() {
+    // Only run if authenticated (targets need to be on screen)
+    if (!_isAuthenticated) return;
+
+    final targets = <TargetFocus>[
+      // TARGET 1: SOS Button
+      TargetFocus(
+        identify: 'sosButton',
+        keyTarget: _sosButtonKey,
+        shape: ShapeLightFocus.Circle,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            builder: (context, controller) {
+              return _buildTutorialCard(
+                controller: controller,
+                step: 1, total: 4,
+                title: 'SOS Emergency Button',
+                description: 'Press in a life-threatening emergency. Records 5 seconds of ambient audio and sends your GPS location directly to Police.',
+              );
+            },
+          ),
+        ],
+      ),
+
+      // TARGET 2: Map Tab
+      TargetFocus(
+        identify: 'mapTab',
+        keyTarget: _mapTabKey,
+        shape: ShapeLightFocus.Circle,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            builder: (context, controller) {
+              return _buildTutorialCard(
+                controller: controller,
+                step: 2, total: 4,
+                title: 'Live Map View',
+                description: 'See real-time incidents in your area. Red danger zones indicate active validated emergencies nearby.',
+              );
+            },
+          ),
+        ],
+      ),
+
+      // TARGET 3: Alerts Tab
+      TargetFocus(
+        identify: 'alertsTab',
+        keyTarget: _alertsTabKey,
+        shape: ShapeLightFocus.Circle,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            builder: (context, controller) {
+              return _buildTutorialCard(
+                controller: controller,
+                step: 3, total: 4,
+                title: 'Alerts Feed',
+                description: 'View all nearby reported incidents. Confirm or contest alerts within 1km to earn community trust.',
+              );
+            },
+          ),
+        ],
+      ),
+
+      // TARGET 4: Menu Button
+      TargetFocus(
+        identify: 'menuButton',
+        keyTarget: _menuButtonKey,
+        shape: ShapeLightFocus.Circle,
+        contents: [
+          TargetContent(
+            align: ContentAlign.bottom,
+            builder: (context, controller) {
+              return _buildTutorialCard(
+                controller: controller,
+                step: 4, total: 4,
+                title: 'Side Menu',
+                description: 'Access your profile, replay this tutorial, or log out from here.',
+              );
+            },
+          ),
+        ],
+      ),
+    ];
+
+    // Launch the spotlight tour using our centralized tutorial engine
+    AppTutorial.showFeatureTour(context: context, targets: targets);
+  }
+
+  /// Builds a dark tactical tutorial card with step counter and navigation buttons
+  Widget _buildTutorialCard({
+    required TutorialCoachMarkController controller,
+    required int step,
+    required int total,
+    required String title,
+    required String description,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E293B), // Dark tactical background
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+        boxShadow: const [
+          BoxShadow(color: Colors.black54, blurRadius: 20, offset: Offset(0, 10)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Step counter
+          Text(
+            '$step / $total',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.5),
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Title
+          Text(title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          // Description
+          Text(description, style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 13, height: 1.4)),
+          const SizedBox(height: 16),
+          // Navigation buttons
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => controller.skip(),
+                child: Text('Skip', style: TextStyle(color: Colors.white.withValues(alpha: 0.7))),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () => controller.next(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF2A6D), // Glowing Accent Pink
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                ),
+                child: const Text('Next', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
 }

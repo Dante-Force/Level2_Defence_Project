@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "496254219662",
+    "project_id": "sos-report-2092a",
+    "storage_bucket": "sos-report-2092a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:496254219662:android:513549e0479b9d71e160df",
+        "android_client_info": {
+          "package_name": "com.example.sos_defence_project"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB_IDVmSHMwmRVOaCO1A9aJjoZa7UusU4k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

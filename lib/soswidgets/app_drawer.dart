@@ -8,8 +8,9 @@ class AppDrawer extends StatelessWidget {
   final String userName;
   final String userPhone;
 
-  // This is a "Callback". It allows the Drawer to trigger a function back on the Homepage.
+  // Callbacks
   final VoidCallback onLogout;
+  final VoidCallback? onStartTutorial; // Optional Tutorial Trigger Callback
 
   const AppDrawer({
     super.key,
@@ -17,6 +18,7 @@ class AppDrawer extends StatelessWidget {
     required this.userName,
     required this.userPhone,
     required this.onLogout,
+    this.onStartTutorial,
   });
 
   @override
@@ -45,6 +47,15 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
 
+            // Interactive App Tutorial Menu Button
+            ListTile(
+              leading: const Icon(Icons.help_outline, color: AppColors.primaryBlue),
+              title: const Text('Interactive App Tutorial', style: TextStyle(color: AppColors.textPrimary)),
+              onTap: () {
+                Navigator.pop(context); // Close Drawer
+                onStartTutorial?.call(); // Trigger tutorial
+              },
+            ),
             // LogOut Button visible if authenticated
             if (isAuthenticated)
               ListTile(
@@ -55,6 +66,7 @@ class AppDrawer extends StatelessWidget {
                   Navigator.pop(context);// closes the drawer automatically
                 },
               ),
+
             const Spacer(),
 
             //Bottom: legal warning

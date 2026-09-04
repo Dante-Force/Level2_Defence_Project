@@ -241,7 +241,7 @@ class _LiveMapViewState extends State<LiveMapView> {
 
             if (widget.isAuthenticated) ...[
               CircleLayer(
-                circles: _activeIncidents.map((incident) {
+                circles: _activeIncidents.where((inc) => inc['status'] == 'VALIDATED').map((incident) {
                   LatLng? loc = _parseLocation(incident['location']);
                   if (loc == null) return null;
                   return CircleMarker(
@@ -256,13 +256,12 @@ class _LiveMapViewState extends State<LiveMapView> {
               ),
 
               MarkerLayer(
-                markers: _activeIncidents.map((incident) {
+                markers: _activeIncidents.where((inc) => inc['status'] == 'VALIDATED').map((incident) {
                   LatLng? loc = _parseLocation(incident['location']);
                   if (loc == null) return null;
                   return Marker(
                     point: loc,
-                    width: 50,
-                    height: 50,
+                    width: 50, height: 50,
                     alignment: Alignment.topCenter,
                     child: GestureDetector(
                       onTap: () => _showIncidentDetails(incident),

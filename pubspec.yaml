@@ -43,17 +43,45 @@ dependencies:
   permission_handler: ^11.3.1 # Android/iOS Security Permissions
   http: ^1.2.0               # REST API Communication
   shared_preferences: ^2.2.2 # Sanctum Token Local Storage
+  tutorial_coach_mark: ^1.2.9
+  record: ^6.1.1               # Real microphone audio recording (SOS trigger)
+  path_provider: ^2.1.6         # Temp file directory for audio captures
+  firebase_core: ^3.12.1
+  firebase_messaging: ^15.2.4
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.0
+
+# Add this block at the very bottom of the file
+flutter_native_splash:
+  color: "#0F172A" # Your dark tactical slate background
+  image: "assets/icons/shield_logo.png" # Your transparent shield PNG
+  android: true # Apply to Android
+  ios: true # Apply to iOS
+
+  # Android 12+ requires a specific inner configuration
+  android_12:
+    image: "assets/icons/shield_logo.png"
+    icon_background_color: "#0F172A"
+
+flutter_launcher_icons:
+      android: true
+      ios: true
+      image_path: "assets/icons/shield_logo.png" # Fallback for iOS and older Androids
+
+      # Android Adaptive Icon Configuration
+      adaptive_icon_background: "#0F172A" # Replaces the white gap with your dark tactical slate
+      adaptive_icon_foreground: "assets/icons/shield_logo.png" # Your transparent shield
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^6.0.0
+      flutter_lints: ^6.0.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -90,3 +118,4 @@ flutter:
       fonts:
         - asset: assets/fonts/Edu_VIC_WA_NT_Hand/EduVICWANTHand-VariableFont_wght.ttf
   # see https://flutter.dev/to/font-from-package
+
