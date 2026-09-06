@@ -8,6 +8,10 @@ import '/soswidgets/visual_evidence_picker.dart'; // YOUR NEW WIDGET
 import 'package:geolocator/geolocator.dart';
 import '/services/api_service.dart';
 
+//for audio record fetching
+import 'package:record/record.dart';
+import 'package:path_provider/path_provider.dart';
+
 class ReportIncidentForm extends StatefulWidget {
   final String categoryName;
   final IconData categoryIcon;
@@ -36,39 +40,87 @@ class _ReportIncidentFormState extends State<ReportIncidentForm> {
   Timer? _audioTimer;
   bool _isSubmitting = false;
 
+  // Real Audio Recorder & File Storage
+  final AudioRecorder _audioRecorder = AudioRecorder();
+  File? _recordedAudioFile;
+
   bool get isDemo => widget.categoryName.toLowerCase().contains('demo');
 
   @override
   void dispose() {
     _descriptionController.dispose();
     _audioTimer?.cancel();
+    _audioRecorder.dispose();
     super.dispose();
   }
 
-  // Audio Logic
-  void _toggleAudioRecording() {
+  // Real Microphone Audio Recording Logic
+  Future<void> _toggleAudioRecording() async {
     if (_isRecordingAudio) {
-      _stopAudioRecording();
+      await _stopAudioRecording();
     } else {
-      setState(() {
-        _isRecordingAudio = true;
-        _hasAudio = false;
-        _audioSeconds = 0;
-      });
+      try {
+        if (await _audioRecorder.hasPermission()) {
+          final dir = await getTemporaryDirectory();
+          final path = '${dir.path}/incident_audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
-      _audioTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        setState(() => _audioSeconds++);
-        if (_audioSeconds >= 10) _stopAudioRecording();
-      });
+          await _audioRecorder.start(
+            const RecordConfig(
+              encoder: AudioEncoder.aacLc,
+              bitRate: 128000,
+              sampleRate: 44100,
+            ),
+            path: path,
+          );
+
+          setState(() {
+            _isRecordingAudio = true;
+            _hasAudio = false;
+            _audioSeconds = 0;
+            _recordedAudioFile = null;
+          });
+
+          _audioTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+            if (!mounted) return;
+            setState(() => _audioSeconds++);
+            if (_audioSeconds >= 15) {
+              await _stopAudioRecording();
+            }
+          });
+          debugPrint("Report: Audio recording started at $path");
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text("Microphone permission required to record audio."),
+            backgroundColor: AppColors.tacticalRed,
+          ));
+        }
+      } catch (e) {
+        debugPrint("Audio recording error: $e");
+      }
     }
   }
 
-  void _stopAudioRecording() {
+  Future<void> _stopAudioRecording() async {
     _audioTimer?.cancel();
-    setState(() {
-      _isRecordingAudio = false;
-      _hasAudio = true;
-    });
+    try {
+      final path = await _audioRecorder.stop();
+      if (path != null && await File(path).exists()) {
+        setState(() {
+          _recordedAudioFile = File(path);
+          _isRecordingAudio = false;
+          _hasAudio = true;
+        });
+        debugPrint("Report: Audio saved successfully (${_recordedAudioFile!.path})");
+      } else {
+        setState(() {
+          _isRecordingAudio = false;
+          _hasAudio = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Audio stop error: $e");
+      setState(() => _isRecordingAudio = false);
+    }
   }
 
   // Submission Logic connected to live ApiService & GPS
@@ -112,10 +164,11 @@ class _ReportIncidentFormState extends State<ReportIncidentForm> {
       debugPrint("GPS timed out or unavailable, using fallback coordinates: $e");
     }
 
-    // Build list of all captured media (photo and/or video)
+    // Build list of all captured media (photo, video, and real audio recording)
     final List<File> mediaList = [];
     if (_finalPhoto != null) mediaList.add(_finalPhoto!);
     if (_finalVideo != null) mediaList.add(_finalVideo!);
+    if (_recordedAudioFile != null) mediaList.add(_recordedAudioFile!);
 
     final success = await ApiService.submitIncident(
       category: widget.categoryName,

@@ -53,19 +53,19 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.4
-  flutter_native_splash: ^2.4.0
+  #flutter_native_splash: ^2.4.0
 
 # Add this block at the very bottom of the file
-flutter_native_splash:
-  color: "#0F172A" # Your dark tactical slate background
-  image: "assets/icons/shield_logo.png" # Your transparent shield PNG
-  android: true # Apply to Android
-  ios: true # Apply to iOS
+#flutter_native_splash:
+  #color: "#0F172A" # Your dark tactical slate background
+  #image: "assets/icons/shield_logo.png" # Your transparent shield PNG
+  #android: true # Apply to Android
+ # ios: true # Apply to iOS
 
   # Android 12+ requires a specific inner configuration
-  android_12:
-    image: "assets/icons/shield_logo.png"
-    icon_background_color: "#0F172A"
+  #android_12:
+    #image: "assets/icons/shield_logo.png"
+    #icon_background_color: "#0F172A"
 
 flutter_launcher_icons:
       android: true

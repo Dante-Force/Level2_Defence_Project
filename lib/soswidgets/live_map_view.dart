@@ -63,7 +63,9 @@ class _LiveMapViewState extends State<LiveMapView> {
   LatLng? _parseLocation(dynamic loc) {
     if (loc != null && loc['coordinates'] != null) {
       // GeoJSON standard: [longitude, latitude]
-      return LatLng(loc['coordinates'][1].toDouble(), loc['coordinates'][0].toDouble());
+      final double lat = (loc['coordinates'][1] as num).toDouble();
+      final double lng = (loc['coordinates'][0] as num).toDouble();
+      return LatLng(lat, lng);
     }
     return null;
   }

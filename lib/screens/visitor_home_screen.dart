@@ -34,6 +34,7 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
   // GlobalKeys for the Interactive App Tutorial spotlight targets
   final GlobalKey _menuButtonKey = GlobalKey();
   final GlobalKey _sosButtonKey = GlobalKey();
+  final GlobalKey _carouselKey = GlobalKey();
   final GlobalKey _mapTabKey = GlobalKey();
   final GlobalKey _alertsTabKey = GlobalKey();
 
@@ -299,12 +300,12 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
           // LAYER C : Horizontal Caterogies report Bar
           // NEW: Fixed so it disappears on the Alert screen!
           if (_isAuthenticated && _currentNavIndex == 0)
-            const Positioned(
+             Positioned(
               bottom: 80,
               left: 0,
               right: 0,
               //calling my external widget isolated for incident categories
-              child: IncidentCategoryCarousel(),
+              child: IncidentCategoryCarousel(key: _carouselKey),
             ),
         ],
       ),
@@ -447,16 +448,37 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
             builder: (context, controller) {
               return _buildTutorialCard(
                 controller: controller,
-                step: 1, total: 4,
+                step: 1, total: 5,
                 title: 'SOS Emergency Button',
-                description: 'Press in a life-threatening emergency. Records 5 seconds of ambient audio and sends your GPS location directly to Police.',
+                description: 'Press in a life-threatening emergency. Records 5 seconds of ambient audio and dispatches your GPS location with high priority to Police.',
               );
             },
           ),
         ],
       ),
 
-      // TARGET 2: Map Tab
+      // TARGET 2: Emergency Categories Carousel
+      TargetFocus(
+        identify: 'categoryCarousel',
+        keyTarget: _carouselKey,
+        shape: ShapeLightFocus.RRect,
+        radius: 16,
+        contents: [
+          TargetContent(
+            align: ContentAlign.top,
+            builder: (context, controller) {
+              return _buildTutorialCard(
+                controller: controller,
+                step: 2, total: 5,
+                title: 'Categorized Emergency Reporting',
+                description: 'Swipe horizontally and select the relevant department (Police, Fire, Medical, etc.) to file a report with photo, video, and voice evidence.',
+              );
+            },
+          ),
+        ],
+      ),
+
+      // TARGET 3: Map Tab
       TargetFocus(
         identify: 'mapTab',
         keyTarget: _mapTabKey,
@@ -467,16 +489,16 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
             builder: (context, controller) {
               return _buildTutorialCard(
                 controller: controller,
-                step: 2, total: 4,
-                title: 'Live Map View',
-                description: 'See real-time incidents in your area. Red danger zones indicate active validated emergencies nearby.',
+                step: 3, total: 5,
+                title: 'Live Tactical Map',
+                description: 'View real-time incidents around you. Red markers and circular danger zones represent active validated emergencies.',
               );
             },
           ),
         ],
       ),
 
-      // TARGET 3: Alerts Tab
+      // TARGET 4: Alerts Tab
       TargetFocus(
         identify: 'alertsTab',
         keyTarget: _alertsTabKey,
@@ -487,16 +509,16 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
             builder: (context, controller) {
               return _buildTutorialCard(
                 controller: controller,
-                step: 3, total: 4,
-                title: 'Alerts Feed',
-                description: 'View all nearby reported incidents. Confirm or contest alerts within 1km to earn community trust.',
+                step: 4, total: 5,
+                title: 'Community Alerts Feed',
+                description: 'Consult nearby reported emergencies. Confirm or contest alerts within 1km to dynamically refine AI trust scores.',
               );
             },
           ),
         ],
       ),
 
-      // TARGET 4: Menu Button
+      // TARGET 5: Menu Button
       TargetFocus(
         identify: 'menuButton',
         keyTarget: _menuButtonKey,
@@ -507,9 +529,9 @@ class _VisitorHomeScreenState extends State<VisitorHomeScreen> {
             builder: (context, controller) {
               return _buildTutorialCard(
                 controller: controller,
-                step: 4, total: 4,
-                title: 'Side Menu',
-                description: 'Access your profile, replay this tutorial, or log out from here.',
+                step: 5, total: 5,
+                title: 'Tactical Menu',
+                description: 'Access your citizen profile, check trust scores, replay this tutorial, or log out.',
               );
             },
           ),
