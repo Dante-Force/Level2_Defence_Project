@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://10.164.81.231:8000/api';
+  static const String baseUrl = 'http://10.130.191.231:8000/api';
 
   // --- TOKEN LOCAL STORAGE ---
   static Future<void> saveToken(String token) async {

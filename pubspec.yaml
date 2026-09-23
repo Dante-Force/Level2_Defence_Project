@@ -65,7 +65,7 @@ dev_dependencies:
   # Android 12+ requires a specific inner configuration
   #android_12:
     #image: "assets/icons/shield_logo.png"
-    #icon_background_color: "#0F172A"
+      #icon_background_color: "#0F172A"
 
 flutter_launcher_icons:
       android: true
